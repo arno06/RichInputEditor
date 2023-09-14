@@ -1,0 +1,37 @@
+<html lang="fr">
+<head>
+    <link href="../src/RichInputEditor.css" rel="stylesheet">
+    <script src="../src/RichInputEditor.js"></script>
+</head>
+<body>
+<input value="{$url}news" name="bouboup" id="input" data-role="RichInputEditor"/>
+<script>
+    let inventory = [
+        {
+            "name":"url",
+            "value":"https://www.vidal.fr/",
+            "active":true
+        },
+        {
+            "name":"token",
+            "value":"abc",
+            "active":true
+        },
+        {
+            "name":"debug",
+            "value":"1",
+            "active":false
+        }
+    ];
+
+    function init(){
+        document.querySelectorAll('input[data-role="RichInputEditor"]').forEach((pElement)=>{
+            new RichInputEditor(pElement, inventory);
+        });
+    }
+
+    window.addEventListener('DOMContentLoaded', init);
+
+</script>
+</body>
+</html>
