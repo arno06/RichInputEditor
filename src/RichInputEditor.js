@@ -36,9 +36,6 @@ class RichInputEditor{
     }
 
     #selectInventoryHandler(e){
-        console.log(e.currentTarget.getAttribute("data-name"));
-        console.log(this.startIndex);
-        console.log();
         this.field.innerText = this.field.innerText.substring(0, this.startIndex)+"{$"+e.currentTarget.getAttribute("data-name")+"}";
         this.#keyUpHandler({ctrlKey:false, keyCode:false,});
     }
@@ -48,13 +45,15 @@ class RichInputEditor{
         if(e.ctrlKey || [37,38,39,40].indexOf(e.keyCode)>-1) {
             return;
         }
+        let s = window.getSelection();
+        this.#saveSelection(s);
         let m = this.field.innerText.match(/\{\$([a-z0-9\-_]*)$/);
         if(m && m.length){
+            this.inventory.style.display = "block";
             if(m[1].length === 0){
                 this.inventory.querySelectorAll('div').forEach((pDiv)=>{
-                    pDiv.style.display = "block";
+                    pDiv.classList.remove('rie-hidden');
                 });
-                let s = window.getSelection();
                 let r = s.getRangeAt(0);
                 let rect = r.getClientRects();
                 if(rect.length){
@@ -70,22 +69,62 @@ class RichInputEditor{
             }else{
                 this.inventory.querySelectorAll('div').forEach((pDiv)=>{
                     let n = pDiv.getAttribute("data-name");
-                    pDiv.style.display = (n.indexOf(m[1])===0)?"block":"none";
+                    pDiv.classList[(n.indexOf(m[1])===0)?"remove":"add"]('rie-hidden');
                 });
+                if(this.inventory.querySelectorAll('div.rie-hidden').length===this.inventory.querySelectorAll('div').length){
+                    this.inventory.style.display = "none";
+                }
             }
-            this.inventory.style.display = "block";
         }else{
             this.inventory.style.display = "none";
         }
 
         this.#enrichContent();
+        this.#restoreSelection();
+        this.input.value = this.field.innerText;
+    }
+
+    #saveSelection(pSelection){
+        this.anchorOffset = pSelection.anchorOffset;
+        this.anchorIndex = 0;
+        let p = pSelection.anchorNode;
+        while((p = p.previousSibling)){
+            this.anchorIndex++;
+        }
+        this.childrenCount = this.#countChildren();
+        console.log("count : ", this.childrenCount, "index : ", this.anchorIndex, "offset : ", this.anchorOffset);
+    }
+
+    #restoreSelection(){
+        let childrenCount = this.#countChildren();
+        console.log("old count : ", this.childrenCount, "new count : ", childrenCount);
+
         let selection = window.getSelection();
         let range = document.createRange();
-        range.setStart(this.field.lastChild, this.field.lastChild.length);
-        range.setEnd(this.field.lastChild, this.field.lastChild.length);
+        let anchorTarget = this.field.firstChild;
+        while(this.anchorIndex>0){
+            this.anchorIndex--;
+            anchorTarget = anchorTarget.nextSibling;
+        }
+        if(anchorTarget.length<this.anchorOffset){
+            console.log("offset too high");
+            anchorTarget = anchorTarget.nextSibling;
+            this.anchorOffset = this.anchorOffset - anchorTarget.length;
+        }
+        console.log(anchorTarget);
+        range.setStart(anchorTarget, this.anchorOffset);
+        range.setEnd(anchorTarget, this.anchorOffset);
         selection.removeAllRanges();
         selection.addRange(range);
-        this.input.value = this.field.innerText;
+    }
+
+    #countChildren(){
+        let count = 1;
+        let c = this.field.firstChild;
+        while((c = c.nextSibling)){
+            count++;
+        }
+        return count;
     }
 
     #enrichContent(){
@@ -106,7 +145,6 @@ class RichInputEditor{
             });
             text = text.replaceAll(pMatch[1], "<span title='"+val+"' class='"+cls.join(" ")+"'>"+pMatch[1]+"</span>");
         });
-        text += "<p></p>";
         this.field.innerHTML = text;
     }
 }
