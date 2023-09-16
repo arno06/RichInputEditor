@@ -85,35 +85,43 @@ class RichInputEditor{
     }
 
     #saveSelection(pSelection){
-        this.anchorOffset = pSelection.anchorOffset;
-        this.anchorIndex = 0;
+        this.completeOffset = pSelection.anchorOffset;
         let p = pSelection.anchorNode;
-        while((p = p.previousSibling)){
-            this.anchorIndex++;
+        if(pSelection.anchorNode.parentNode.nodeName === "SPAN"){
+            p = pSelection.anchorNode.parentNode;
         }
-        this.childrenCount = this.#countChildren();
-        console.log("count : ", this.childrenCount, "index : ", this.anchorIndex, "offset : ", this.anchorOffset);
+        while((p = p.previousSibling)){
+            this.completeOffset+=p.textContent.length;
+        }
     }
 
     #restoreSelection(){
-        let childrenCount = this.#countChildren();
-        console.log("old count : ", this.childrenCount, "new count : ", childrenCount);
 
         let selection = window.getSelection();
         let range = document.createRange();
-        let anchorTarget = this.field.firstChild;
-        while(this.anchorIndex>0){
-            this.anchorIndex--;
-            anchorTarget = anchorTarget.nextSibling;
+
+        let off = this.completeOffset;
+        let p = this.field.firstChild;
+        while(off>0 && p){
+            if(off >= p.textContent.length){
+                off -= p.textContent.length;
+                p = p.nextSibling;
+            }else{
+                break;
+            }
         }
-        if(anchorTarget.length<this.anchorOffset){
-            console.log("offset too high");
-            anchorTarget = anchorTarget.nextSibling;
-            this.anchorOffset = this.anchorOffset - anchorTarget.length;
+
+        if(!p){
+            p = this.field.lastChild;
+            off = p.textContent.length;
         }
-        console.log(anchorTarget);
-        range.setStart(anchorTarget, this.anchorOffset);
-        range.setEnd(anchorTarget, this.anchorOffset);
+
+        if(p.nodeName === "SPAN"){
+            p = p.firstChild;
+        }
+
+        range.setStart(p, off);
+        range.setEnd(p, off);
         selection.removeAllRanges();
         selection.addRange(range);
     }
@@ -143,7 +151,9 @@ class RichInputEditor{
                     cls.push("rie-disabled");
                 }
             });
-            text = text.replaceAll(pMatch[1], "<span title='"+val+"' class='"+cls.join(" ")+"'>"+pMatch[1]+"</span>");
+            let start = text.slice(0, pMatch.index);
+            let end = text.slice(pMatch.index+pMatch[1].length, text.length);
+            text = start + "<span title='"+val+"' class='"+cls.join(" ")+"'>"+pMatch[1]+"</span>" + end;
         });
         this.field.innerHTML = text;
     }
