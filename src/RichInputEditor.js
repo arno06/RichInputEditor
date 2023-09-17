@@ -15,6 +15,7 @@ class RichInputEditor{
         this.#enrichContent(this.field);
         this.field.setAttribute("contentEditable", true);
         this.field.addEventListener('keyup', this.#keyUpHandler.bind(this));
+        this.field.addEventListener('keydown', this.#keyDownHandler.bind(this));
         this.startIndex = 0;
     }
 
@@ -40,16 +41,26 @@ class RichInputEditor{
         this.#keyUpHandler({ctrlKey:false, keyCode:false,});
     }
 
-    #keyUpHandler(e){
+    #keyDownHandler(e){
+        if(e.keyCode === 13 || e.keyCode === 9){
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            if(!this.inventory.classList.contains('rie-hidden')){
+                this.#selectInventoryHandler({currentTarget:this.inventory.querySelector('div:not(.rie-hidden)')});
+            }
+        }
+    }
 
-        if(e.ctrlKey || [37,38,39,40].indexOf(e.keyCode)>-1) {
+    #keyUpHandler(e){
+        if(e.ctrlKey || [37,38,39,40,91].indexOf(e.keyCode)>-1) {
             return;
         }
         let s = window.getSelection();
         this.#saveSelection(s);
         let m = this.field.innerText.match(/\{\$([a-z0-9\-_]*)$/);
         if(m && m.length){
-            this.inventory.style.display = "block";
+            this.inventory.classList.remove('rie-hidden');
             if(m[1].length === 0){
                 this.inventory.querySelectorAll('div').forEach((pDiv)=>{
                     pDiv.classList.remove('rie-hidden');
@@ -63,7 +74,7 @@ class RichInputEditor{
                 let index = s.anchorOffset-2;//-2 -> ${
                 let p = s.anchorNode;
                 while((p = p.previousSibling)){
-                    index += p.innerText.length;
+                    index += p.textContent.length;
                 }
                 this.startIndex = index;
             }else{
@@ -72,11 +83,11 @@ class RichInputEditor{
                     pDiv.classList[(n.indexOf(m[1])===0)?"remove":"add"]('rie-hidden');
                 });
                 if(this.inventory.querySelectorAll('div.rie-hidden').length===this.inventory.querySelectorAll('div').length){
-                    this.inventory.style.display = "none";
+                    this.inventory.classList.add('rie-hidden');
                 }
             }
         }else{
-            this.inventory.style.display = "none";
+            this.inventory.classList.add('rie-hidden');
         }
 
         this.#enrichContent();
