@@ -4,7 +4,6 @@ class RichInputEditor{
     constructor(pParent, pInventory) {
         this.data = pInventory;
         this.input = pParent;
-        this.input.setAttribute("type", "hidden");
         this.element = document.createElement('div');
         this.element.classList.add('rie-input');
         this.input.parentNode.insertBefore(this.element, this.input);
@@ -17,6 +16,7 @@ class RichInputEditor{
         this.field.addEventListener('keyup', this.#keyUpHandler.bind(this));
         this.field.addEventListener('keydown', this.#keyDownHandler.bind(this));
         this.startIndex = 0;
+        this.input.setAttribute("type", "hidden");
     }
 
     #setupInventory(){
@@ -58,21 +58,29 @@ class RichInputEditor{
         }
         let s = window.getSelection();
         this.#saveSelection(s);
+        this.#handleInventory(s);
+        this.#enrichContent();
+        this.#restoreSelection();
+        this.input.value = this.field.innerText;
+    }
+
+    #handleInventory(pSelection){
         let m = this.field.innerText.match(/\{\$([a-z0-9\-_]*)$/);
         if(m && m.length){
             this.inventory.classList.remove('rie-hidden');
             if(m[1].length === 0){
                 this.inventory.querySelectorAll('div').forEach((pDiv)=>{
+                    pDiv.innerHTML = pDiv.getAttribute("data-name");
                     pDiv.classList.remove('rie-hidden');
                 });
-                let r = s.getRangeAt(0);
+                let r = pSelection.getRangeAt(0);
                 let rect = r.getClientRects();
                 if(rect.length){
                     let x = rect[0].x - (this.field.getBoundingClientRect()).x;
                     this.inventory.style.left = x+"px";
                 }
-                let index = s.anchorOffset-2;//-2 -> ${
-                let p = s.anchorNode;
+                let index = pSelection.anchorOffset-2;//-2 -> ${
+                let p = pSelection.anchorNode;
                 while((p = p.previousSibling)){
                     index += p.textContent.length;
                 }
@@ -80,7 +88,11 @@ class RichInputEditor{
             }else{
                 this.inventory.querySelectorAll('div').forEach((pDiv)=>{
                     let n = pDiv.getAttribute("data-name");
-                    pDiv.classList[(n.indexOf(m[1])===0)?"remove":"add"]('rie-hidden');
+                    let found = (n.indexOf(m[1])===0);
+                    pDiv.classList[found?"remove":"add"]('rie-hidden');
+                    if(found){
+                        pDiv.innerHTML = n.replace(m[1], '<b>'+m[1]+'</b>');
+                    }
                 });
                 if(this.inventory.querySelectorAll('div.rie-hidden').length===this.inventory.querySelectorAll('div').length){
                     this.inventory.classList.add('rie-hidden');
@@ -89,10 +101,6 @@ class RichInputEditor{
         }else{
             this.inventory.classList.add('rie-hidden');
         }
-
-        this.#enrichContent();
-        this.#restoreSelection();
-        this.input.value = this.field.innerText;
     }
 
     #saveSelection(pSelection){
