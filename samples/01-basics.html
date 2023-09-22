@@ -3,12 +3,17 @@
     <link href="../src/RichInputEditor.css" rel="stylesheet">
     <script src="../src/RichInputEditor.js"></script>
     <style>
-        .rie-field{width:300px;}
+        *{font-family: Arial, sans-serif;font-size:14px;}
+        .rie-field{width:350px;}
     </style>
 </head>
 <body>
-<input value="{$url}news?{$token}token={$token}&debug=" name="bouboup" id="input" data-role="RichInputEditor"/>
-<input value="{$url}news?token={$token" name="bouboup2" id="input2" data-role="RichInputEditor"/>
+<p>
+    <input value="{$url}news?token={$token}&debug=" name="bouboup" id="input" data-role="RichInputEditor"/>
+</p>
+<p>
+    <input value="{$url}api/v2/?token={$token}" name="bouboup2" id="input2" data-role="RichInputEditor"/>
+</p>
 <script>
     let inventory = [
         {
@@ -27,10 +32,28 @@
             "active":false
         }
     ];
+    let inventory2 = [
+        {
+            "name":"url",
+            "value":"https://vidalid.vidal.fr/",
+            "active":true
+        },
+        {
+            "name":"token",
+            "value":"1232be4b32eza",
+            "active":true
+        },
+        {
+            "name":"debug",
+            "value":"1",
+            "active":true
+        }
+    ];
 
     function init(){
-        document.querySelectorAll('input[data-role="RichInputEditor"]').forEach((pElement)=>{
-            new RichInputEditor(pElement, inventory);
+        document.querySelectorAll('input[data-role="RichInputEditor"]').forEach((pElement, pIndex)=>{
+            let inv = pIndex>0?inventory2:inventory;
+            new RichInputEditor(pElement, inv);
         });
     }
 

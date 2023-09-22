@@ -2,7 +2,6 @@
 
 class RichInputEditor{
     constructor(pParent, pInventory) {
-        this.data = pInventory;
         this.input = pParent;
         this.element = document.createElement('div');
         this.element.classList.add('rie-input');
@@ -10,8 +9,7 @@ class RichInputEditor{
         this.element.innerHTML = "<div class='rie-field'>"+this.input.value+"</div>";
         this.field = this.element.querySelector('.rie-field');
         this.field.setAttribute("spellcheck", false);
-        this.#setupInventory();
-        this.#enrichContent(this.field);
+        this.setInventory(pInventory);
         this.field.setAttribute("contentEditable", true);
         this.field.addEventListener('keyup', this.#keyUpHandler.bind(this));
         this.field.addEventListener('keydown', this.#keyDownHandler.bind(this));
@@ -19,29 +17,38 @@ class RichInputEditor{
         this.input.setAttribute("type", "hidden");
     }
 
-    #setupInventory(){
-        this.inventory = document.createElement('div');
-        this.inventory.classList.add('rie-inventory');
-        this.inventory.classList.add('rie-hidden');
+    setInventory(pInventory){
+        this.data = pInventory;
+        if(!this.inventory){
+            this.inventory = document.createElement('div');
+            this.inventory.classList.add('rie-inventory');
+            this.inventory.classList.add('rie-hidden');
+            this.element.appendChild(this.inventory);
+        }
+        this.inventory.innerHTML = "";
         this.data.forEach((pInv)=>{
             let d = document.createElement('div');
             d.setAttribute("data-name", pInv.name);
-            d.innerHTML = pInv.name;
+            d.innerHTML = '<span class="rie-name">'+pInv.name + '</span> - <span class="rie-val">'+pInv.value+'</span>';
             if(!pInv.active){
                 d.classList.add('rie-disabled');
             }
             d.addEventListener('click', this.#selectInventoryHandler.bind(this));
             this.inventory.appendChild(d);
         });
-        this.element.appendChild(this.inventory);
+        this.#enrichContent();
     }
 
     #selectInventoryHandler(e){
+        this.#saveSelection(window.getSelection());
         this.field.innerText = this.field.innerText.substring(0, this.startIndex)+"{$"+e.currentTarget.getAttribute("data-name")+"}";
-        this.#keyUpHandler({ctrlKey:false, keyCode:false,});
+        this.#keyUpHandler({ctrlKey:false, keyCode:false});
     }
 
     #keyDownHandler(e){
+        if(e.keyCode === 27){
+            this.inventory.classList.add('rie-hidden');
+        }
         if(e.keyCode === 13 || e.keyCode === 9){
             e.preventDefault();
             e.stopPropagation();
@@ -53,14 +60,17 @@ class RichInputEditor{
     }
 
     #keyUpHandler(e){
-        if(e.ctrlKey || [37,38,39,40,91].indexOf(e.keyCode)>-1) {
+        if(e.ctrlKey || [13,9,27,37,38,39,40,91].indexOf(e.keyCode)>-1) {
             return;
         }
         let s = window.getSelection();
-        this.#saveSelection(s);
+        let realKeyUpEvent = e.keyCode !== false;
+        if(realKeyUpEvent){
+            this.#saveSelection(s);
+        }
         this.#handleInventory(s);
         this.#enrichContent();
-        this.#restoreSelection();
+        this.#restoreSelection(realKeyUpEvent);
         this.input.value = this.field.innerText;
     }
 
@@ -68,35 +78,24 @@ class RichInputEditor{
         let m = this.field.innerText.match(/\{\$([a-z0-9\-_]*)$/);
         if(m && m.length){
             this.inventory.classList.remove('rie-hidden');
-            if(m[1].length === 0){
-                this.inventory.querySelectorAll('div').forEach((pDiv)=>{
-                    pDiv.innerHTML = pDiv.getAttribute("data-name");
-                    pDiv.classList.remove('rie-hidden');
-                });
-                let r = pSelection.getRangeAt(0);
-                let rect = r.getClientRects();
-                if(rect.length){
-                    let x = rect[0].x - (this.field.getBoundingClientRect()).x;
-                    this.inventory.style.left = x+"px";
-                }
-                let index = pSelection.anchorOffset-2;//-2 -> ${
-                let p = pSelection.anchorNode;
-                while((p = p.previousSibling)){
-                    index += p.textContent.length;
-                }
-                this.startIndex = index;
-            }else{
-                this.inventory.querySelectorAll('div').forEach((pDiv)=>{
-                    let n = pDiv.getAttribute("data-name");
-                    let found = (n.indexOf(m[1])===0);
-                    pDiv.classList[found?"remove":"add"]('rie-hidden');
-                    if(found){
-                        pDiv.innerHTML = n.replace(m[1], '<b>'+m[1]+'</b>');
-                    }
-                });
-                if(this.inventory.querySelectorAll('div.rie-hidden').length===this.inventory.querySelectorAll('div').length){
-                    this.inventory.classList.add('rie-hidden');
-                }
+            this.inventory.querySelectorAll('div').forEach((pDiv)=>{
+                let n = pDiv.getAttribute("data-name");
+                let found = (n.indexOf(m[1])===0);
+                pDiv.classList[found?"remove":"add"]('rie-hidden');
+                pDiv.querySelector('.rie-name').innerHTML = found?n.replace(m[1], '<b>'+m[1]+'</b>'):n;
+            });
+            if(this.inventory.querySelectorAll('div.rie-hidden').length===this.inventory.querySelectorAll('div').length){
+                this.inventory.classList.add('rie-hidden');
+            }
+            let r = pSelection.getRangeAt(0);
+            let rect = r.getClientRects();
+            if(rect.length){
+                this.startIndex = m.index;
+                let t = this.field.innerText;
+                this.field.innerHTML = t.slice(0, m.index)+"<i>"+m[0]+"</i>";
+                let x = this.field.querySelector('i').getBoundingClientRect().left;
+                this.inventory.style.left = x+"px";
+                this.field.innerHTML = t;
             }
         }else{
             this.inventory.classList.add('rie-hidden');
@@ -114,12 +113,12 @@ class RichInputEditor{
         }
     }
 
-    #restoreSelection(){
+    #restoreSelection(pUseSavedOffset){
 
         let selection = window.getSelection();
         let range = document.createRange();
 
-        let off = this.completeOffset;
+        let off = pUseSavedOffset?this.completeOffset:this.field.innerText.length;
         let p = this.field.firstChild;
         while(off>0 && p){
             if(off >= p.textContent.length){
@@ -160,7 +159,7 @@ class RichInputEditor{
         Array.from(matches).reverse().forEach((pMatch)=>{
             let cls = [];
             let val;
-            inventory.forEach((pInventory)=>{
+            this.data.forEach((pInventory)=>{
                 if(pInventory.name !== pMatch[2]){
                     return;
                 }
