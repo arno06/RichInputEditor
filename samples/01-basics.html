@@ -9,21 +9,21 @@
 </head>
 <body>
 <p>
-    <input value="{$url}news?token={$token}&debug=" name="bouboup" id="input" data-role="RichInputEditor"/>
+    <input value="{$url}path?token={$token}&debug=" name="bouboup" id="input" data-role="RichInputEditor"/>
 </p>
 <p>
-    <input value="{$url}api/v2/?token={$token}" name="bouboup2" id="input2" data-role="RichInputEditor"/>
+    <input value="{$url}api/version/?token={$token}" name="bouboup2" id="input2" data-role="RichInputEditor"/>
 </p>
 <script>
     let inventory = [
         {
             "name":"url",
-            "value":"https://www.vidal.fr/",
+            "value":"https://some.url/",
             "active":true
         },
         {
             "name":"token",
-            "value":"abc",
+            "value":"07083109728718762867568209490137",
             "active":true
         },
         {
@@ -35,7 +35,7 @@
     let inventory2 = [
         {
             "name":"url",
-            "value":"https://vidalid.vidal.fr/",
+            "value":"https://some.api.fr/",
             "active":true
         },
         {
@@ -46,6 +46,51 @@
         {
             "name":"debug",
             "value":"1",
+            "active":true
+        },
+        {
+            "name":"foo",
+            "value":"1",
+            "active":true
+        },
+        {
+            "name":"bar",
+            "value":"34989680617684055542145790769944",
+            "active":true
+        },
+        {
+            "name":"bananas",
+            "value":"w00t",
+            "active":true
+        },
+        {
+            "name":"bouboup",
+            "value":"values",
+            "active":true
+        },
+        {
+            "name":"so",
+            "value":"much",
+            "active":true
+        },
+        {
+            "name":"differents",
+            "value":"values",
+            "active":true
+        },
+        {
+            "name":"very",
+            "value":"long",
+            "active":true
+        },
+        {
+            "name":"list",
+            "value":"!",
+            "active":true
+        },
+        {
+            "name":"richinputeditor",
+            "value":"component",
             "active":true
         }
     ];

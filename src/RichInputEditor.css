@@ -3,9 +3,12 @@
 .rie-input>div.rie-field>span{background:rgba(255, 0, 0, .2);}
 .rie-input>div.rie-field>span.rie-inv{background:rgba(0, 255, 0, .2);}
 .rie-input>div.rie-field>span.rie-inv.rie-disabled{background:rgba(0, 255, 0, .2);opacity:.3;}
-.rie-input>div.rie-inventory{top:100%;left:0;background:#fff;border:solid 1px #eee;width:200px;position:absolute;transform:translateX(-5px);z-index:50;}
+.rie-input>div.rie-inventory{top:100%;left:0;background:#fff;border:solid 1px #eee;width:250px;position:absolute;transform:translateX(-5px);z-index:50;box-shadow: 0 2px 3px rgba(0, 0, 0, .2);}
 .rie-input>div.rie-inventory.rie-hidden{display:none;}
-.rie-input>div.rie-inventory>div{padding:5px;background:rgba(0, 255, 0, .2);cursor: pointer;}
+.rie-input>div.rie-inventory>div{padding:5px;cursor: pointer;display:flex;align-items: center;overflow:hidden;flex-wrap: nowrap;gap:3px;font-size:0.9em;}
+.rie-input>div.rie-inventory>div:hover{background: #c9e8f5;}
+.rie-input>div.rie-inventory>div.selected{background: #38b2d4;color:#fff;}
+.rie-input>div.rie-inventory>div.selected>span.rie-val{color: #ebf8fd;}
 .rie-input>div.rie-inventory>div>span.rie-val{font-size:0.9em;color:#888;}
 .rie-input>div.rie-inventory>div.rie-disabled{opacity: 0.3;}
 .rie-input>div.rie-inventory>div.rie-hidden{display:none;}

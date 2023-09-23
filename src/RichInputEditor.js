@@ -1,5 +1,3 @@
-
-
 class RichInputEditor{
     constructor(pParent, pInventory) {
         this.input = pParent;
@@ -41,22 +39,52 @@ class RichInputEditor{
 
     #selectInventoryHandler(e){
         this.#saveSelection(window.getSelection());
-        this.field.innerText = this.field.innerText.substring(0, this.startIndex)+"{$"+e.currentTarget.getAttribute("data-name")+"}";
+        this.field.innerText = this.field.innerText.slice(0, this.startIndex)+"{$"+e.currentTarget.getAttribute("data-name")+"}"+this.field.innerText.slice(this.endIndex);
         this.#keyUpHandler({ctrlKey:false, keyCode:false});
+        this.inventory.classList.add('rie-hidden');
     }
 
     #keyDownHandler(e){
         if(e.keyCode === 27){
             this.inventory.classList.add('rie-hidden');
         }
+        if(e.keyCode === 38 || e.keyCode === 40){
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            e.stopPropagation();
+            if(!this.inventory.classList.contains('rie-hidden')){
+                this.#circleThroughInventory(e.keyCode=== 40);
+            }
+        }
         if(e.keyCode === 13 || e.keyCode === 9){
             e.preventDefault();
             e.stopPropagation();
             e.stopImmediatePropagation();
             if(!this.inventory.classList.contains('rie-hidden')){
-                this.#selectInventoryHandler({currentTarget:this.inventory.querySelector('div:not(.rie-hidden)')});
+                this.#selectInventoryHandler({currentTarget:this.inventory.querySelector('div.selected')});
             }
         }
+    }
+
+    #circleThroughInventory(pNext){
+        let selectedIndex;
+        let availableItems = this.inventory.querySelectorAll('div:not(.rie-hidden)');
+        availableItems.forEach((pDiv, pIndex)=>{
+            if(pDiv.classList.contains('selected')){
+                selectedIndex = pIndex;
+            }
+        });
+        if(pNext){
+            selectedIndex = selectedIndex === availableItems.length-1?0:selectedIndex+1;
+        }else{
+            selectedIndex = selectedIndex === 0 ? availableItems.length-1:selectedIndex-1;
+        }
+        this.inventory.querySelector('div.selected').classList.remove('selected');
+        availableItems.forEach((pDiv, pIndex)=>{
+            if(selectedIndex === pIndex){
+                pDiv.classList.add('selected');
+            }
+        });
     }
 
     #keyUpHandler(e){
@@ -75,13 +103,19 @@ class RichInputEditor{
     }
 
     #handleInventory(pSelection){
-        let m = this.field.innerText.match(/\{\$([a-z0-9\-_]*)$/);
+        let m = this.field.innerText.slice(0, this.completeOffset).match(/\{\$([a-z0-9\-_]*)$/);
         if(m && m.length){
             this.inventory.classList.remove('rie-hidden');
+            let hasSelected = false;
             this.inventory.querySelectorAll('div').forEach((pDiv)=>{
                 let n = pDiv.getAttribute("data-name");
                 let found = (n.indexOf(m[1])===0);
                 pDiv.classList[found?"remove":"add"]('rie-hidden');
+                pDiv.classList.remove('selected');
+                if(found && !hasSelected){
+                    hasSelected = true;
+                    pDiv.classList.add('selected');
+                }
                 pDiv.querySelector('.rie-name').innerHTML = found?n.replace(m[1], '<b>'+m[1]+'</b>'):n;
             });
             if(this.inventory.querySelectorAll('div.rie-hidden').length===this.inventory.querySelectorAll('div').length){
@@ -91,8 +125,9 @@ class RichInputEditor{
             let rect = r.getClientRects();
             if(rect.length){
                 this.startIndex = m.index;
+                this.endIndex = m.index + m[0].length;
                 let t = this.field.innerText;
-                this.field.innerHTML = t.slice(0, m.index)+"<i>"+m[0]+"</i>";
+                this.field.innerHTML = t.slice(0, m.index)+"<i>"+m[0]+"</i>"+t.slice(m.index);
                 let x = this.field.querySelector('i').getBoundingClientRect().left;
                 this.inventory.style.left = x+"px";
                 this.field.innerHTML = t;
