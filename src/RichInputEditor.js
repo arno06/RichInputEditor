@@ -13,6 +13,7 @@ class RichInputEditor{
         this.field.addEventListener('keydown', this.#keyDownHandler.bind(this));
         this.startIndex = 0;
         this.input.setAttribute("type", "hidden");
+        this._hideInventory = this.#hideInventory.bind(this);
     }
 
     setInventory(pInventory){
@@ -41,12 +42,12 @@ class RichInputEditor{
         this.#saveSelection(window.getSelection());
         this.field.innerText = this.field.innerText.slice(0, this.startIndex)+"{$"+e.currentTarget.getAttribute("data-name")+"}"+this.field.innerText.slice(this.endIndex);
         this.#keyUpHandler({ctrlKey:false, keyCode:false});
-        this.inventory.classList.add('rie-hidden');
+        this.#hideInventory();
     }
 
     #keyDownHandler(e){
         if(e.keyCode === 27){
-            this.inventory.classList.add('rie-hidden');
+            this.#hideInventory();
         }
         if(e.keyCode === 38 || e.keyCode === 40){
             e.preventDefault();
@@ -105,7 +106,7 @@ class RichInputEditor{
     #handleInventory(pSelection){
         let m = this.field.innerText.slice(0, this.completeOffset).match(/\{\$([a-z0-9\-_]*)$/);
         if(m && m.length){
-            this.inventory.classList.remove('rie-hidden');
+            this.#showInventory();
             let hasSelected = false;
             this.inventory.querySelectorAll('div').forEach((pDiv)=>{
                 let n = pDiv.getAttribute("data-name");
@@ -119,7 +120,7 @@ class RichInputEditor{
                 pDiv.querySelector('.rie-name').innerHTML = found?n.replace(m[1], '<b>'+m[1]+'</b>'):n;
             });
             if(this.inventory.querySelectorAll('div.rie-hidden').length===this.inventory.querySelectorAll('div').length){
-                this.inventory.classList.add('rie-hidden');
+                this.#hideInventory();
             }
             let r = pSelection.getRangeAt(0);
             let rect = r.getClientRects();
@@ -133,7 +134,7 @@ class RichInputEditor{
                 this.field.innerHTML = t;
             }
         }else{
-            this.inventory.classList.add('rie-hidden');
+            this.#hideInventory();
         }
     }
 
@@ -209,5 +210,15 @@ class RichInputEditor{
             text = start + "<span title='"+val+"' class='"+cls.join(" ")+"'>"+pMatch[1]+"</span>" + end;
         });
         this.field.innerHTML = text;
+    }
+
+    #showInventory(){
+        this.inventory.classList.remove('rie-hidden');
+        document.addEventListener('click', this._hideInventory, false);
+    }
+
+    #hideInventory(){
+        this.inventory.classList.add('rie-hidden');
+        document.removeEventListener('click', this._hideInventory, false);
     }
 }
