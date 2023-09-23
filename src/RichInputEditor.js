@@ -129,7 +129,7 @@ class RichInputEditor{
                 this.endIndex = m.index + m[0].length;
                 let t = this.field.innerText;
                 this.field.innerHTML = t.slice(0, m.index)+"<i>"+m[0]+"</i>"+t.slice(m.index);
-                let x = this.field.querySelector('i').getBoundingClientRect().left;
+                let x = this.field.querySelector('i').getBoundingClientRect().x  - this.field.getBoundingClientRect().x;
                 this.inventory.style.left = x+"px";
                 this.field.innerHTML = t;
             }
